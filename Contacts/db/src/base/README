@@ -1,0 +1,4 @@
+This directory contains the database initialization scripts which are
+used to create the _contacts_ database and the database users. After
+running these scripts an empty database is created, ready to execute
+the migration scripts for the _contacts_ database.

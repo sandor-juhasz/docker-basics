@@ -1,0 +1,7 @@
+#
+# Ignoring development tooling and documentation files.
+#
+flyway.conf
+src/base/README
+build/README
+bin

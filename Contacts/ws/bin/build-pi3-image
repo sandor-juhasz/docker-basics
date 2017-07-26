@@ -1,0 +1,3 @@
+#/bin/bash
+
+docker build -t sjuhasz/contacts-ws-pi3:latest -f Dockerfile-pi3 .

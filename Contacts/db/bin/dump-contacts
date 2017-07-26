@@ -1,0 +1,5 @@
+#/bin/bash
+
+mkdir build
+echo "USE contacts;" >build/99_contacts.sql
+docker exec -it contacts_db_1 mysqldump contacts -pwelcome >>build/99_contacts.sql

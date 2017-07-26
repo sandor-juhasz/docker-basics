@@ -1,0 +1,141 @@
+#+title: Contacts demo application
+
+* Overview
+The goal of this demo project is to build a simple Java and
+MariaDB-based web application using Docker containers. 
+
+** Containers
+The project uses three containers: a database, a web service and a web
+application container. The final project will be deployed to my
+RaspberryPi cluster using Docker Swarm.
+
+| Container | Image                   | Description                                   |
+|-----------+-------------------------+-----------------------------------------------|
+| db        | sjuhasz/contacts-db-pi3 | The MariaDB instance with the Contacts schema |
+|           |                         |                                               |
+  
+* Tools used to develop the demo
+- Latest Docker Toolbox for Windows, including docker-compose.
+- Flyway
+
+- Development environment
+
+* Database
+The database called ~contacts~ is implemented using MariaDB. It has a
+single table called ~contact~. This table is accessible by the ~apps~
+user. The ~apps~ user's default password is ~apps~.
+
+#+BEGIN_SRC plantuml :file db_schema.png
+package contacts {
+   class contact {
+      id    INTEGER AUTO_INCREMENT PRIMARY KEY
+      name  VARCHAR(200)
+      email VARCHAR(200)
+      --
+   }
+}
+#+END_SRC
+
+#+RESULTS:
+[[file:db_schema.png]]
+
+** Starting the server
+#+BEGIN_SRC sh
+docker run -e "MYSQL_ROOT_PASSWORD=welcome" \
+           --name "contacts-db" \
+           -p 3306:3306
+           sjuhasz/contacts-db-pi3:latest
+#+END_SRC
+
+** Pushing the db image to Docker Hub
+#+BEGIN_SRC sh
+docker login # enter username and password.
+docke push sjuhasz/contacts-db-pi3:latest
+#+END_SRC
+
+* Web service
+
+#+BEGIN_SRC plantuml :file ws.png
+
+
+package ws {
+
+    package ws-resources {
+        class Contacts {
+        }
+    }
+
+    package domain {
+        class Contact {
+             - Integer id
+             - String name        
+             - String email;
+        }
+
+        interface ContactDAO {
+             Contact getContact(int id) throws DataException
+             List<Contact> getContacts() throws DataException
+             void addContact(Contact contact) throws DataException
+             void deleteContact(Contact contact) throws DataException
+             void updateContact(Contact contact) throws DataException
+       }
+
+       interface PersistenceAdapter {
+   	     void init(String url, String username, String password);	
+	     void close();	
+	     ContactDAO getContactDAO(); 
+       }
+
+       class PersistenceManager {
+             - static PersistenceAdapter adapter
+             + static void init(String url, String username, String password)
+             + static void close()
+             + static ContactDAO getContactDAO()
+       }
+    }
+
+   ContactDAO .> Contact
+   PersistenceManager *-> PersistenceAdapter
+   PersistenceAdapter .> ContactDAO : "creates"
+
+package "domain-mariadb" {
+
+    class PersistenceAdapterImpl {
+    }
+
+    class ContactDAOImpl {
+    }
+
+    class domain-mariadb.Contact <<JPA Object>>{
+    }
+
+    class EMFUtils {
+        - static EntityManagerFactory emf; 
+        + static void init(String url, String username, String password)
+        + static EntityManager getEntityManager()
+        + static void close()
+    }
+
+    PersistenceManager ..> PersistenceAdapterImpl : "looks up"
+    PersistenceAdapter <|.. PersistenceAdapterImpl 
+    ContactDAO <|.. ContactDAOImpl
+    PersistenceAdapterImpl .> ContactDAOImpl : "creates"
+    PersistenceAdapterImpl --> EMFUtils
+    ContactDAOImpl --> EMFUtils
+    ContactDAOImpl .> "domain-mariadb.Contact"
+}
+
+Contacts ..> PersistenceManager
+Contacts ..> ContactDAO
+Contacts ..> Contact
+}
+#+END_SRC
+
+#+RESULTS:
+[[file:ws.png]]
+
+
+** TODOs
+*** Create script to start the database.
+*** Create a script to start an interactive mysql session for the database.
+** Create images to play with Swarm.

@@ -1,0 +1,28 @@
+#
+# Starts the local development environment of the Contacts demo porject.
+#
+
+version: '2'
+
+services:
+  db:
+    image: "sjuhasz/contacts-db:latest"
+    environment:
+      - MYSQL_ROOT_PASSWORD=welcome
+    ports:
+      - "3306:3306"
+    build:
+      context: ./db
+
+  ws:
+    image: "sjuhasz/contacts-ws:latest"
+    environment:
+      - CONTACTS_DB_URL=jdbc:mariadb://db/contacts
+      - CONTACTS_DB_USERNAME=apps
+      - CONTACTS_DB_PASSWORD=apps
+      - PORT=8080
+    ports:
+      - "8888:8080"
+    build:
+      context: ./ws
+      
